@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engine Solar 3D - N-Corpos & Fusões</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      user-select: none;
+      background-color: #020204;
+    }
+
+    #instrucoes {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.88);
+      padding: 25px 35px;
+      border-radius: 12px;
+      cursor: pointer;
+      border: 1px solid #ffffff33;
+      z-index: 50;
+      width: 320px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.9);
+    }
+
+    #hud-tempo {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      color: #00d2ff;
+      background: rgba(0, 0, 0, 0.75);
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid #00d2ff55;
+      font-family: monospace;
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    #mira {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background-color: white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .painel-ui {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 15, 25, 0.95);
+      color: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      border: 1px solid #ffffff44;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.8);
+      z-index: 100;
+      width: 360px;
+    }
+
+    .campo-controle {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .campo-controle label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .campo-controle input[type=range], .campo-controle input[type=text], .campo-controle select {
+      width: 100%;
+      cursor: pointer;
+      box-sizing: border-box;
+      background: #222;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 6px;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 15px;
+      background: rgba(255,255,255,0.05);
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .valor-display {
+      color: #48dbfb;
+      font-weight: bold;
+    }
+
+    .btn-menu {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      border: none;
+      color: white;
+      transition: background 0.2s;
+    }
+
+    .btn-acao {
+      width: 100%;
+      margin-top: 8px;
+      background: #10ac84;
+      color: white;
+      border: none;
+      padding: 10px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .btn-acao:hover { background: #1dd1a1; }
+    .btn-fechar { background: #ff4757; }
+    .btn-fechar:hover { background: #ff6b81; }
+
+    #lista-saves {
+      max-height: 250px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      padding-right: 5px;
+    }
+
+    .item-save {
+      background: rgba(255, 255, 255, 0.07);
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      border: 1px solid #ffffff1a;
+    }
+
+    .item-save-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .item-save-acoes {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-save-opt {
+      flex: 1;
+      padding: 4px;
+      font-size: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+    }
+
+    .btn-salvar { background: #2e86de; }
+    .btn-carregar { background: #10ac84; }
+    .btn-link { background: #9c88ff; }
+    .btn-link:hover { background: #8c7ae6; }
+    .btn-deletar { background: #ee5253; }
+    .btn-deletar:hover { background: #ff6b81; }
+
+    .item-corpo-lista {
+      background: rgba(255, 255, 255, 0.07);
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #ffffff1a;
+      transition: background 0.2s;
+    }
+    .item-corpo-lista:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .lista-controles-info {
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .lista-controles-info ul {
+      margin: 5px 0 12px 0;
+      padding-left: 18px;
+    }
+
+    .lista-controles-info li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="hud-tempo">Velocidade: 1 hora/seg (1x)</div>
+
+  <div id="instrucoes">
+    <h2 style="margin-top:0; color:#1dd1a1;">Engine Solar 3D</h2>
+    <p style="font-size:13px; color:#ccc; margin-bottom:15px;">Clique na tela para assumir o controle da nave/câmera</p>
+    
+    <button class="btn-menu" id="btn-retomar" style="background: #10ac84;">▶ Continuar Simulação</button>
+    <button class="btn-menu" id="btn-abrir-importar" style="background: #e056fd;">📥 Importar Save (/share:)</button>
+    <button class="btn-menu" id="btn-abrir-lista-corpos-menu" style="background: #48dbfb; color:#000;">🌌 Lista de Corpos (Tecla L)</button>
+    <button class="btn-menu" id="btn-abrir-controles" style="background: #00d2ff; color:#000;">🎮 Todos os Controles</button>
+    <button class="btn-menu" id="btn-abrir-graficos" style="background: #ff9f43;">⚙️ Configurações Gráficas</button>
+    <button class="btn-menu" id="btn-abrir-saves" style="background: #5f27cd;">📁 Gerenciar Saves (10 Slots)</button>
+  </div>
+
+  <div id="mira"></div>
+
+  <div id="painel-importar" class="painel-ui">
+    <h3 style="margin-top: 0; text-align: center; color: #e056fd;">📥 Importar Sistema Solar</h3>
+    <p style="font-size: 12px; color: #ccc;">Cole abaixo o código ou link iniciando por <b>/share:</b></p>
+    <div class="campo-controle">
+      <input type="text" id="input-importar-code" placeholder="/share:códigoBase64..." style="font-family: monospace; font-size: 11px;">
+    </div>
+    <button class="btn-acao" id="btn-confirmar-importar" style="background: #e056fd;">Carregar Save</button>
+    <button class="btn-acao btn-fechar" id="btn-fechar-importar">Voltar ao Menu</button>
+  </div>
+
+  <div id="painel-lista-corpos" class="painel-ui">
+    <h3 style="margin-top: 0; text-align: center; color: #48dbfb;">🌌 Lista de Corpos Celestes</h3>
+    <div id="lista-corpos-conteudo" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px; display: flex; flex-direction: column; gap: 6px;"></div>
+    <button class="btn-acao btn-fechar" id="btn-fechar-lista-corpos">Voltar ao Menu</button>
+  </div>
+
+  <div id="painel-controles" class="painel-ui">
+    <h3 style="margin-top: 0; text-align: center; color: #00d2ff;">🎮 Guia Completo de Controles</h3>
+    <div class="lista-controles-info">
+      <strong style="color:#48dbfb;">Navegação e Movimento:</strong>
+      <ul>
+        <li><strong>W / A / S / D:</strong> Mover Câmera em Velocidade Normal (4.0)</li>
+        <li><strong>Setas Direcionais:</strong> Movimento Ajustado/Lento (1.0)</li>
+        <li><strong>Teclas - e = :</strong> Movimento Rápido Espacial (25.0)</li>
+      </ul>
+      <strong style="color:#48dbfb;">Ações do Mouse:</strong>
+      <ul>
+        <li><strong>Mouse:</strong> Olhar 360° (quando travado)</li>
+        <li><strong>Clique ESQUERDO:</strong> Pousar ou Decolar do Planeta mirado</li>
+        <li><strong>Clique DIREITO:</strong> Editar / Excluir Propriedades</li>
+      </ul>
+      <strong style="color:#48dbfb;">Atalhos de Interface e Tempo:</strong>
+      <ul>
+        <li><strong>Pressione L:</strong> Abrir lista de corpos celestes e viajar até eles</li>
+        <li><strong>Pressione TAB:</strong> Abrir / Fechar Menu Criador de Objetos</li>
+        <li><strong>Pressione ESC:</strong> Pausar e abrir Menu de Configurações</li>
+        <li><strong>Teclas 0 a 9:</strong> Alterar velocidade da simulação temporal (0x a 256x)</li>
+      </ul>
+    </div>
+    <button class="btn-acao btn-fechar" id="btn-fechar-controles">Voltar ao Menu</button>
+  </div>
+
+  <div id="painel-graficos" class="painel-ui">
+    <h3 style="margin-top: 0; text-align: center; color: #ff9f43;">⚙️ Configurações Gráficas</h3>
+    <div class="campo-controle">
+      <label>Preset Gráfico Geral:</label>
+      <select id="select-preset-grafico">
+        <option value="1">1: Original / Padrão (Desempenho)</option>
+        <option value="2" selected>2: Melhorado (Iluminação & Sombras Filmic)</option>
+        <option value="3">3: Ultra (Nível 1 + 2 Maximizados)</option>
+      </select>
+    </div>
+    <div class="campo-controle">
+      <label>Resolução Renderizada: <span id="valor-res" class="valor-display">1.25x</span></label>
+      <input type="range" id="slider-res" min="0.5" max="2.0" step="0.25" value="1.25">
+    </div>
+    <div class="campo-controle">
+      <label>Distância de Visão (Far Plane): <span id="valor-far" class="valor-display">50.000</span></label>
+      <input type="range" id="slider-far" min="10000" max="100000" step="5000" value="50000">
+    </div>
+    <div class="checkbox-container">
+      <input type="checkbox" id="check-caudas" checked>
+      <label for="check-caudas" style="cursor:pointer;">Exibir Rastros Orbitais (Caudas)</label>
+    </div>
+    <div class="checkbox-container">
+      <input type="checkbox" id="check-erupcoes" checked>
+      <label for="check-erupcoes" style="cursor:pointer;">Efeitos Dinâmicos de Erupção Estelar</label>
+    </div>
+    <button class="btn-acao btn-fechar" id="btn-fechar-graficos">Voltar ao Menu</button>
+  </div>
+
+  <div id="painel-criador" class="painel-ui">
+    <h3 style="margin-top:0; text-align:center; color:#1dd1a1;">Menu do Criador</h3>
+    <div class="campo-controle">
+      <label>Nome do Corpo:</label>
+      <input type="text" id="input-nome-criar" value="Novo Corpo">
+    </div>
+    <div class="campo-controle">
+      <label>Objeto:</label>
+      <select id="select-tipo">
+        <option value="planeta">Planeta Rochoso</option>
+        <option value="gasoso">Planeta Gasoso</option>
+        <option value="estrela">Nova Estrela</option>
+        <option value="neutron">Estrela de Nêutrons</option>
+        <option value="buraconegro">Buraco Negro</option>
+      </select>
+    </div>
+    <div class="campo-controle">
+      <label>Tamanho: <span id="valor-tamanho-criar" class="valor-display">12.000 km</span></label>
+      <input type="range" id="slider-tamanho-criar" min="1" max="100" step="1" value="12">
+    </div>
+    <div class="campo-controle" id="container-montanha-criar">
+      <label>Altura das Montanhas (Relevo): <span id="valor-montanha-criar" class="valor-display">Baixo</span></label>
+      <input type="range" id="slider-montanha-criar" min="0" max="10" step="1" value="2">
+    </div>
+    <div class="checkbox-container" id="container-agua-criar-check">
+      <input type="checkbox" id="check-agua-criar" checked>
+      <label for="check-agua-criar" style="cursor:pointer;">Possui Oceanos / Água</label>
+    </div>
+    <div id="opcoes-planeta" class="checkbox-container">
+      <input type="checkbox" id="check-orbita-auto" checked>
+      <label for="check-orbita-auto" style="cursor:pointer;">Velocidade orbital perfeita</label>
+    </div>
+    <button class="btn-acao" id="btn-criar-objeto">Criar no Espaço</button>
+    <button class="btn-acao btn-fechar" id="btn-fechar-criador">Fechar Menu</button>
+  </div>
+
+  <div id="painel-editar-objeto" class="painel-ui">
+    <h3 id="titulo-editar" style="margin-top: 0; text-align: center; color: #ff9f43;">Propriedades</h3>
+    <div class="campo-controle">
+      <label>Nome:</label>
+      <input type="text" id="input-nome-edit">
+    </div>
+    <div class="campo-controle">
+      <label>Tamanho / Diâmetro: <span id="valor-km-edit" class="valor-display">12.000 km</span></label>
+      <input type="range" id="slider-tamanho-edit" min="1" max="150" step="1" value="12">
+    </div>
+    <div class="campo-controle" id="container-montanha-edit">
+      <label>Altura das Montanhas (Relevo): <span id="valor-montanha-edit" class="valor-display">Baixo</span></label>
+      <input type="range" id="slider-montanha-edit" min="0" max="10" step="1" value="2">
+    </div>
+    <div class="checkbox-container" id="container-agua-edit-check">
+      <input type="checkbox" id="check-agua-edit">
+      <label for="check-agua-edit" style="cursor:pointer;">Possui Oceanos / Água</label>
+    </div>
+    <div class="campo-controle" id="container-cor-base">
+      <label id="label-cor-base">Cor Base / Solo:</label>
+      <input type="color" id="input-cor-base" value="#ffffff" style="width:100%; height:35px; border:none; cursor:pointer; background:none;">
+    </div>
+    <div class="campo-controle" id="container-cor-edit">
+      <label id="label-cor-edit">Atmosfera / Espectro:</label>
+      <input type="range" id="slider-cor-edit" min="0" max="100" step="1" value="50">
+    </div>
+    <div class="checkbox-container" id="container-atmosfera-edit">
+      <input type="checkbox" id="check-atmosfera">
+      <label for="check-atmosfera" style="cursor:pointer;">Ativar Atmosfera Gradiente</label>
+    </div>
+    <button class="btn-acao btn-deletar" id="btn-deletar-objeto" style="margin-top: 10px;">🗑️ Excluir Objeto</button>
+    <button class="btn-acao btn-fechar" id="btn-fechar-editar">Voltar</button>
+  </div>
+
+  <div id="painel-saves" class="painel-ui">
+    <h3 style="margin-top: 0; text-align: center; color: #5f27cd;">Slots de Salvamento</h3>
+    <div id="lista-saves"></div>
+    <button class="btn-acao btn-fechar" id="btn-fechar-saves">Voltar ao Menu</button>
+  </div>
+
+  <div id="painel-link" class="painel-ui">
+    <h3 style="margin-top: 0; text-align: center; color: #9c88ff;">🔗 Link do Save em Base64</h3>
+    <p style="font-size: 12px; color: #ccc;">Abaixo está o seu link codificado contendo as informações deste mapa:</p>
+    <div class="campo-controle">
+      <input type="text" id="input-save-link" readonly style="font-family: monospace; font-size: 11px; background: #111; color: #00d2ff; border: 1px solid #555;">
+    </div>
+    <button class="btn-acao" id="btn-copiar-link" style="background: #9c88ff;">Copiar Link</button>
+    <button class="btn-acao btn-fechar" id="btn-fechar-link">Voltar aos Saves</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+
+  <script>
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    const cena = new THREE.Scene();
+    cena.background = new THREE.Color(0x020204);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 50000);
+    camera.position.set(0, 80, 250);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const luzEspacoFraca = new THREE.AmbientLight(0x222233, 0.25);
+    cena.add(luzEspacoFraca);
+
+    let estrelas = [];
+    let planetas = [];
+    let aneisDetritos = [];
+    let estrelasFundoMesh = null;
+
+    const G = 0.5;
+    const NUM_PONTOS_CAUDA = 120;
+    const MULT_ESTRELA = 8.0;   
+    const MULT_PLANETA = 25.0;  
+
+    let planetaPousado = null;
+    let offsetPouso = new THREE.Vector3();
+
+    let multiplicadorTempo = 1;
+    let erupcoesAtivas = true;
+    const HUD = document.getElementById('hud-tempo');
+
+    const VELOCIDADES_TEMPO = {
+      '0': { valor: 0, rotulo: "Pausado (0x)" },
+      '1': { valor: 1, rotulo: "1 hora/seg (1x)" },
+      '2': { valor: 2, rotulo: "6 horas/seg" },
+      '3': { valor: 4, rotulo: "12 horas/seg" },
+      '4': { valor: 8, rotulo: "1 dia/seg" },
+      '5': { valor: 16, rotulo: "2 dias/seg" },
+      '6': { valor: 32, rotulo: "1 semana/seg" },
+      '7': { valor: 64, rotulo: "1 mês/seg" },
+      '8': { valor: 128, rotulo: "1 ano/seg" },
+      '9': { valor: 256, rotulo: "1 década/seg" }
+    };
+
+    function deletarObjeto(obj) {
+      if (!obj) return;
+      if (planetaPousado === obj) planetaPousado = null;
+
+      const tipo = obj.userData.tipo;
+      if (tipo === 'planeta' || tipo === 'gasoso') {
+        if (obj.userData.caudaMesh) cena.remove(obj.userData.caudaMesh);
+        cena.remove(obj);
+        const idx = planetas.indexOf(obj);
+        if (idx !== -1) planetas.splice(idx, 1);
+      } else {
+        cena.remove(obj);
+        const idx = estrelas.indexOf(obj);
+        if (idx !== -1) estrelas.splice(idx, 1);
+      }
+    }
+
+    function carregarDoBase64(strEntrada) {
+      if (!strEntrada || !strEntrada.trim()) return false;
+      try {
+        let inputStr = strEntrada.trim();
+        if (inputStr.includes('#')) inputStr = inputStr.split('#')[1];
+        if (!inputStr.startsWith('/share:')) return false;
+
+        const base64Data = inputStr.substring(7);
+        const jsonString = decodeURIComponent(escape(atob(base64Data)));
+        const dadosState = JSON.parse(jsonString);
+
+        limparSistemaSolar();
+        camera.position.set(dadosState.camera.x, dadosState.camera.y, dadosState.camera.z);
+
+        for (let e of dadosState.estrelas) {
+          let novaEstrela;
+          if (e.tipo === 'neutron') novaEstrela = criarEstrelaNeutron(new THREE.Vector3(e.x, e.y, e.z), e.valorSlider, e.nome);
+          else if (e.tipo === 'buraconegro') novaEstrela = criarBuracoNegro(new THREE.Vector3(e.x, e.y, e.z), e.valorSlider, e.nome);
+          else novaEstrela = criarEstrela(new THREE.Vector3(e.x, e.y, e.z), e.valorSlider, e.porcentagemCor, e.nome);
+          
+          if (novaEstrela.userData) {
+            novaEstrela.userData.velocidade.set(e.vx || 0, e.vy || 0, e.vz || 0);
+          }
+        }
+
+        for (let p of dadosState.planetas) {
+          criarPlaneta(
+            new THREE.Vector3(p.x, p.y, p.z), p.valorSlider, false,
+            new THREE.Vector3(p.vx, p.vy, p.vz), p.temAtmosfera,
+            p.corAtmosferaPorcentagem, p.corHexBase || '#ffffff', p.nome, p.tipo,
+            p.alturaMontanha || 2, p.temAgua !== undefined ? p.temAgua : true
+          );
+        }
+
+        alert("Sistema Solar carregado com sucesso!");
+        return true;
+      } catch (err) {
+        alert("Código Base64 ou Link inválido/corrompido!");
+        return false;
+      }
+    }
+
+    function criarPoeiraEspacialEEstrelas() {
+      const geoEstrelas = new THREE.BufferGeometry();
+      const posEstrelas = new Float32Array(15000);
+      const coresEstrelas = new Float32Array(15000);
+      for(let i = 0; i < 15000; i += 3) {
+        posEstrelas[i] = (Math.random() - 0.5) * 20000;
+        posEstrelas[i+1] = (Math.random() - 0.5) * 20000;
+        posEstrelas[i+2] = (Math.random() - 0.5) * 20000;
+        const c = new THREE.Color().setHSL(Math.random() * 0.2 + 0.5, 0.6, 0.8);
+        coresEstrelas[i] = c.r; coresEstrelas[i+1] = c.g; coresEstrelas[i+2] = c.b;
+      }
+      geoEstrelas.setAttribute('position', new THREE.BufferAttribute(posEstrelas, 3));
+      geoEstrelas.setAttribute('color', new THREE.BufferAttribute(coresEstrelas, 3));
+      estrelasFundoMesh = new THREE.Points(geoEstrelas, new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.8 }));
+      cena.add(estrelasFundoMesh);
+    }
+    criarPoeiraEspacialEEstrelas();
+
+    function aplicarPresetGrafico(nivel) {
+      nivel = parseInt(nivel);
+      const sliderRes = document.getElementById('slider-res');
+      const valorRes = document.getElementById('valor-res');
+      if (nivel === 1) {
+        renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = false; luzEspacoFraca.intensity = 0.4;
+        if (estrelasFundoMesh) estrelasFundoMesh.visible = false;
+        sliderRes.value = 1.0; valorRes.textContent = "1.0x"; renderer.setPixelRatio(window.devicePixelRatio * 1.0);
+      } else if (nivel === 2) {
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0; renderer.shadowMap.enabled = true; luzEspacoFraca.intensity = 0.2;
+        if (estrelasFundoMesh) { estrelasFundoMesh.visible = true; estrelasFundoMesh.material.opacity = 0.6; }
+        sliderRes.value = 1.25; valorRes.textContent = "1.25x"; renderer.setPixelRatio(window.devicePixelRatio * 1.25);
+      } else if (nivel === 3) {
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.35; renderer.shadowMap.enabled = true; luzEspacoFraca.intensity = 0.25;
+        if (estrelasFundoMesh) { estrelasFundoMesh.visible = true; estrelasFundoMesh.material.opacity = 1.0; }
+        sliderRes.value = 1.5; valorRes.textContent = "1.5x"; renderer.setPixelRatio(window.devicePixelRatio * 1.5);
+      }
+      planetas.forEach(p => { p.castShadow = (nivel >= 2); p.receiveShadow = (nivel >= 2); });
+      estrelas.forEach(e => { if (e.userData.luz) e.userData.luz.castShadow = (nivel >= 2); });
+    }
+
+    function gerarGeometriaComRelevo(alturaMontanha) {
+      const geometria = new THREE.SphereGeometry(1, 64, 64);
+      const posicaoAtributo = geometria.attributes.position;
+      const v = new THREE.Vector3();
+
+      for (let i = 0; i < posicaoAtributo.count; i++) {
+        v.fromBufferAttribute(posicaoAtributo, i);
+        v.normalize();
+        
+        let ruido = Math.sin(v.x * 12.0) * Math.cos(v.y * 12.0) * Math.sin(v.z * 12.0);
+        ruido += (Math.sin(v.x * 24.0) * Math.cos(v.z * 24.0)) * 0.5;
+        
+        let fatorAltura = 1.0 + (ruido * 0.03 * (alturaMontanha / 2.0));
+        v.multiplyScalar(fatorAltura);
+        
+        posicaoAtributo.setXYZ(i, v.x, v.y, v.z);
+      }
+      geometria.computeVertexNormals();
+      return geometria;
+    }
+
+    function criarTexturaGranulada(corBaseHex) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = corBaseHex || '#ffffff';
+      ctx.fillRect(0, 0, 256, 256);
+      const imgData = ctx.getImageData(0, 0, 256, 256);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const granulo = (Math.random() - 0.5) * 30;
+        data[i] = Math.min(255, Math.max(0, data[i] + granulo));
+        data[i+1] = Math.min(255, Math.max(0, data[i+1] + granulo));
+        data[i+2] = Math.min(255, Math.max(0, data[i+2] + granulo));
+      }
+      ctx.putImageData(imgData, 0, 0);
+      const textura = new THREE.CanvasTexture(canvas);
+      textura.wrapS = THREE.RepeatWrapping; textura.wrapT = THREE.RepeatWrapping; textura.repeat.set(2, 2);
+      return textura;
+    }
+
+    function criarTexturaGasoso(cor1Hex, cor2Hex) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512; canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = cor1Hex || '#ffffff';
+      ctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 40; i++) {
+        let y = Math.random() * 512; let h = Math.random() * 30 + 5;
+        ctx.fillStyle = Math.random() > 0.5 ? (cor2Hex || '#d1d1d1') : 'rgba(0, 0, 0, 0.08)';
+        ctx.fillRect(0, y, 512, h);
+      }
+      const textura = new THREE.CanvasTexture(canvas);
+      textura.wrapS = THREE.RepeatWrapping; textura.wrapT = THREE.RepeatWrapping;
+      return textura;
+    }
+
+    const vertexShaderAtmosfera = `varying vec3 vNormal; void main() { vNormal = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+    const fragmentShaderAtmosfera = `varying vec3 vNormal; uniform vec3 corAtmosfera; void main() { float intensidade = pow(0.6 - dot(vNormal, vec3(0, 0, 1.0)), 2.0); gl_FragColor = vec4(corAtmosfera, 1.0) * intensidade * 1.5; }`;
+
+    function criarTexturaFogoErupcao() {
+      const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256; const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 256, 256); ctx.lineWidth = 4; ctx.lineCap = 'round';
+      for (let i = 0; i < 40; i++) {
+        ctx.beginPath();
+        let startX = 50 + Math.random() * 60; let startY = 240 - Math.random() * 40;
+        let controlX = startX + (Math.random() - 0.2) * 120; let controlY = startY - 80 - Math.random() * 60;
+        let endX = startX + 40 + Math.random() * 100; let endY = startY - 140 - Math.random() * 80;
+        ctx.moveTo(startX, startY); ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+        ctx.strokeStyle = Math.random() > 0.4 ? '#ff6600' : '#ffcc00'; ctx.stroke();
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+    const texturaFogoGlobal = criarTexturaFogoErupcao();
+
+    function criarSpriteTexto(nome) {
+      const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 64; const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.roundRect(10, 10, 236, 44, 10); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(nome, 128, 32);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false }));
+      sprite.scale.set(12, 3, 1);
+      return sprite;
+    }
+
+    function calcularRaio3DPlaneta(valorSlider) { return (valorSlider / 10) * (MULT_PLANETA / 10); }
+    function calcularRaio3DEstrela(valorSlider) { return (valorSlider / 100) * MULT_ESTRELA; }
+
+    function criarEstrela(posicao, valorSlider = 1400, porcentagemCor = 60, nome = "Sol") {
+      const grupoEstrela = new THREE.Group(); grupoEstrela.position.copy(posicao);
+      const nucleoMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), new THREE.MeshBasicMaterial({ color: 0xffffff })); grupoEstrela.add(nucleoMesh);
+      const atmosferaMesh = new THREE.Mesh(new THREE.SphereGeometry(1.15, 64, 64), new THREE.ShaderMaterial({ vertexShader: vertexShaderAtmosfera, fragmentShader: fragmentShaderAtmosfera, uniforms: { corAtmosfera: { value: new THREE.Color(0xffffff) } }, transparent: true, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false }));
+      grupoEstrela.add(atmosferaMesh);
+
+      const placasErupcao = [];
+      for (let i = 0; i < 18; i++) {
+        const placaMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), new THREE.MeshBasicMaterial({ map: texturaFogoGlobal, transparent: true, opacity: 0.9, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        const theta = Math.random() * 2.0 * Math.PI; const phi = Math.acos(2.0 * Math.random() - 1.0);
+        const dirNormal = new THREE.Vector3(Math.sin(phi) * Math.cos(theta), Math.sin(phi) * Math.sin(theta), Math.cos(phi));
+        placaMesh.position.copy(dirNormal).multiplyScalar(1.0); placaMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirNormal);
+        placaMesh.visible = erupcoesAtivas;
+        placaMesh.userData = { dirNormal: dirNormal, fase: Math.random() * Math.PI * 2, velocidadeErupcao: 1.5 + Math.random() * 2.0, escalaBase: 0.6 + Math.random() * 0.5 };
+        grupoEstrela.add(placaMesh); placasErupcao.push(placaMesh);
+      }
+
+      const luzEstelar = new THREE.PointLight(0xffffff, 3, 30000, 0.8); luzEstelar.castShadow = true; luzEstelar.shadow.mapSize.width = 1024; luzEstelar.shadow.mapSize.height = 1024; grupoEstrela.add(luzEstelar);
+      const spriteNome = criarSpriteTexto(nome); spriteNome.position.set(0, 2.5, 0); grupoEstrela.add(spriteNome);
+
+      grupoEstrela.userData = {
+        tipo: 'estrela', nome: nome, valorSlider: valorSlider, porcentagemCor: porcentagemCor,
+        massa: valorSlider * 0.5, velocidade: new THREE.Vector3(0, 0, 0),
+        luz: luzEstelar, spriteNome: spriteNome, nucleoMesh: nucleoMesh, atmosferaMesh: atmosferaMesh, placasErupcao: placasErupcao
+      };
+      cena.add(grupoEstrela); estrelas.push(grupoEstrela);
+      atualizarEscalaEstrela(grupoEstrela, valorSlider); atualizarCorEstrela(grupoEstrela, porcentagemCor);
+      return grupoEstrela;
+    }
+
+    function criarEstrelaNeutron(posicao, valorSlider = 300, nome = "Pulsar") {
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), new THREE.MeshBasicMaterial({ color: 0x88ccff })); mesh.position.copy(posicao);
+      const luz = new THREE.PointLight(0x00d2ff, 5, 15000, 0.5); luz.castShadow = true; mesh.add(luz);
+      const matFeixe = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+      const feixe1 = new THREE.Mesh(new THREE.ConeGeometry(0.8, 18, 32), matFeixe); feixe1.position.set(0, 9, 0);
+      const feixe2 = new THREE.Mesh(new THREE.ConeGeometry(0.8, 18, 32), matFeixe); feixe2.position.set(0, -9, 0); feixe2.rotation.z = Math.PI;
+      mesh.add(feixe1); mesh.add(feixe2);
+      const spriteNome = criarSpriteTexto(nome); spriteNome.position.set(0, 2.2, 0); mesh.add(spriteNome);
+
+      mesh.userData = {
+        tipo: 'neutron', nome: nome, valorSlider: valorSlider, porcentagemCor: 80,
+        massa: valorSlider * 1.5, velocidade: new THREE.Vector3(0, 0, 0),
+        luz: luz, spriteNome: spriteNome
+      };
+      cena.add(mesh); estrelas.push(mesh); atualizarEscalaEstrela(mesh, valorSlider);
+      return mesh;
+    }
+
+    function criarBuracoNegro(posicao, valorSlider = 600, nome = "Singularidade") {
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 })); mesh.position.copy(posicao);
+      const disco = new THREE.Mesh(new THREE.RingGeometry(1.2, 3.0, 64), new THREE.MeshBasicMaterial({ color: 0xff7700, side: THREE.DoubleSide, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })); disco.rotation.x = Math.PI / 2; mesh.add(disco);
+      const halo = new THREE.Mesh(new THREE.SphereGeometry(1.6, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.25, side: THREE.BackSide, blending: THREE.AdditiveBlending })); mesh.add(halo);
+      const luz = new THREE.PointLight(0xff5500, 1.5, 12000); mesh.add(luz);
+      const spriteNome = criarSpriteTexto(nome); spriteNome.position.set(0, 2.2, 0); mesh.add(spriteNome);
+
+      mesh.userData = {
+        tipo: 'buraconegro', nome: nome, valorSlider: valorSlider, porcentagemCor: 0,
+        massa: valorSlider * 3.0, velocidade: new THREE.Vector3(0, 0, 0),
+        luz: luz, spriteNome: spriteNome, discoAcrecao: disco
+      };
+      cena.add(mesh); estrelas.push(mesh); atualizarEscalaEstrela(mesh, valorSlider);
+      return mesh;
+    }
+
+    function carregarEstadoInicial() {
+      if (window.location.hash && window.location.hash.length > 1) { 
+        if (carregarDoBase64(window.location.hash)) return; 
+      }
+      
+      criarEstrela(new THREE.Vector3(0, 0, 0), 1400, 60, "Sol");
+      criarPlaneta(new THREE.Vector3(150, 0, 0), 12, true, null, true, 50, '#1e90ff', "Terra", 'planeta', 2, true);
+    }
+    carregarEstadoInicial();
+
+    function calcularAceleracao(alvo, listaCorpos) {
+      const acelTotal = new THREE.Vector3(0, 0, 0);
+      for (let outro of listaCorpos) {
+        if (outro === alvo || !outro.userData || !outro.userData.massa) continue;
+        const rVetor = new THREE.Vector3().subVectors(outro.position, alvo.position);
+        const distSq = rVetor.lengthSq();
+        if (distSq > 0.1) {
+          const fMag = (G * outro.userData.massa) / (distSq + 0.01);
+          rVetor.normalize().multiplyScalar(fMag);
+          acelTotal.add(rVetor);
+        }
+      }
+      return acelTotal;
+    }
+
+    function criarPlaneta(posicao, valorSlider = 12, calcularOrbita = true, velInicial = null, temAtmo = false, corAtmoPorc = 50, corHex = '#ffffff', nome = "Planeta", tipoPlaneta = 'planeta', alturaMontanha = 2, temAgua = true) {
+      const geometriaPlaneta = (tipoPlaneta === 'gasoso') ? 
+        new THREE.SphereGeometry(1, 64, 64) : 
+        gerarGeometriaComRelevo(alturaMontanha);
+      
+      let material = (tipoPlaneta === 'gasoso') ? 
+        new THREE.MeshStandardMaterial({ map: criarTexturaGasoso(corHex, '#d1d1d1'), roughness: 0.8, metalness: 0.1 }) : 
+        new THREE.MeshStandardMaterial({ map: criarTexturaGranulada(corHex), roughness: 0.7, metalness: 0.1, color: corHex });
+      
+      const planetaMesh = new THREE.Mesh(geometriaPlaneta, material);
+      planetaMesh.position.copy(posicao); planetaMesh.castShadow = true; planetaMesh.receiveShadow = true;
+
+      let aguaMesh = null;
+      if (temAgua && tipoPlaneta !== 'gasoso') {
+        const geoAgua = new THREE.SphereGeometry(0.99, 64, 64);
+        const matAgua = new THREE.MeshStandardMaterial({ color: 0x1e90ff, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.65 });
+        aguaMesh = new THREE.Mesh(geoAgua, matAgua);
+        aguaMesh.receiveShadow = true;
+        planetaMesh.add(aguaMesh);
+      }
+
+      const atmosferaMesh = new THREE.Mesh(new THREE.SphereGeometry(1.12, 64, 64), new THREE.ShaderMaterial({ vertexShader: vertexShaderAtmosfera, fragmentShader: fragmentShaderAtmosfera, uniforms: { corAtmosfera: { value: new THREE.Color(0x48dbfb) } }, transparent: true, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false }));
+      atmosferaMesh.visible = false; planetaMesh.add(atmosferaMesh);
+
+      const raioVisivel = calcularRaio3DPlaneta(valorSlider); planetaMesh.scale.set(raioVisivel, raioVisivel, raioVisivel);
+      const velocidade = velInicial ? velInicial.clone() : new THREE.Vector3(0, 0, 0);
+
+      if (!velInicial && calcularOrbita && estrelas.length > 0) {
+        let estrelaMaisProxima = estrelas[0]; let menorDistancia = posicao.distanceTo(estrelaMaisProxima.position);
+        for (let i = 1; i < estrelas.length; i++) {
+          const d = posicao.distanceTo(estrelas[i].position);
+          if (d < menorDistancia) { menorDistancia = d; estrelaMaisProxima = estrelas[i]; }
+        }
+        const rVetor = new THREE.Vector3().subVectors(posicao, estrelaMaisProxima.position); const r = rVetor.length();
+        if (r > 0.1) {
+          const vOrbital = Math.sqrt((G * estrelaMaisProxima.userData.massa) / r);
+          velocidade.copy(new THREE.Vector3(-rVetor.z, 0, rVetor.x).normalize().multiplyScalar(vOrbital));
+        }
+      }
+
+      const posicoesCauda = new Float32Array(NUM_PONTOS_CAUDA * 3);
+      for (let i = 0; i < NUM_PONTOS_CAUDA * 3; i += 3) { posicoesCauda[i] = posicao.x; posicoesCauda[i+1] = posicao.y; posicoesCauda[i+2] = posicao.z; }
+      const linhaCauda = new THREE.Line(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(posicoesCauda, 3)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }));
+      if (document.getElementById('check-caudas')) linhaCauda.visible = document.getElementById('check-caudas').checked;
+      cena.add(linhaCauda);
+
+      const spriteNome = criarSpriteTexto(nome); spriteNome.position.set(0, 1.8, 0); planetaMesh.add(spriteNome);
+
+      planetaMesh.userData = {
+        tipo: tipoPlaneta, nome: nome, valorSlider: valorSlider, corHexBase: corHex,
+        velocidade: velocidade, massa: valorSlider * 0.05,
+        alturaMontanha: alturaMontanha, temAgua: temAgua, aguaMesh: aguaMesh,
+        historicoPosicoes: Array(NUM_PONTOS_CAUDA).fill().map(() => posicao.clone()), caudaMesh: linhaCauda, atmosferaMesh: atmosferaMesh, spriteNome: spriteNome, temAtmosfera: temAtmo, corAtmosferaPorcentagem: corAtmoPorc
+      };
+      cena.add(planetaMesh); planetas.push(planetaMesh);
+      atualizarAtmosferaPlaneta(planetaMesh, temAtmo, corAtmoPorc);
+    }
+
+    function fundirCorposMassivos(obj1, obj2) {
+      let maior = obj1.userData.massa >= obj2.userData.massa ? obj1 : obj2;
+      let menor = obj1 === maior ? obj2 : obj1;
+
+      const mTotal = maior.userData.massa + menor.userData.massa;
+      const pMaior = maior.userData.velocidade.clone().multiplyScalar(maior.userData.massa);
+      const pMenor = menor.userData.velocidade.clone().multiplyScalar(menor.userData.massa);
+      
+      maior.userData.velocidade.copy(pMaior.add(pMenor).divideScalar(mTotal));
+      maior.userData.massa = mTotal;
+      
+      let ganhoVolume = menor.userData.valorSlider * 0.45;
+      let novoSlider = maior.userData.valorSlider + ganhoVolume;
+      atualizarEscalaEstrela(maior, novoSlider);
+
+      deletarObjeto(menor);
+    }
+
+    function fundirPlanetas(p1, p2) {
+      let maior = p1.userData.massa >= p2.userData.massa ? p1 : p2;
+      let menor = p1 === maior ? p2 : p1;
+
+      const mTotal = maior.userData.massa + menor.userData.massa;
+      const pMaior = maior.userData.velocidade.clone().multiplyScalar(maior.userData.massa);
+      const pMenor = menor.userData.velocidade.clone().multiplyScalar(menor.userData.massa);
+
+      maior.userData.velocidade.copy(pMaior.add(pMenor).divideScalar(mTotal));
+
+      let novoSlider = maior.userData.valorSlider + (menor.userData.valorSlider * 0.5);
+      atualizarEscalaPlaneta(maior, novoSlider);
+
+      deletarObjeto(menor);
+    }
+
+    function destruirPlanetaPorRoche(planeta, estrela) {
+      if (planetaPousado === planeta) planetaPousado = null;
+      cena.remove(planeta.userData.caudaMesh); cena.remove(planeta);
+      const idx = planetas.indexOf(planeta); if (idx !== -1) planetas.splice(idx, 1);
+
+      const pos = new Float32Array(500 * 3); const raioAnelBase = estrela.position.distanceTo(planeta.position);
+      for (let i = 0; i < 500; i++) {
+        const angulo = Math.random() * Math.PI * 2; const raio = raioAnelBase + (Math.random() - 0.5) * 8;
+        pos[i * 3] = estrela.position.x + Math.cos(angulo) * raio; pos[i * 3 + 1] = estrela.position.y + (Math.random() - 0.5) * 2.0; pos[i * 3 + 2] = estrela.position.z + Math.sin(angulo) * raio;
+      }
+      const anel = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(pos, 3)), new THREE.PointsMaterial({ color: planeta.userData.corHexBase || 0xffffff, size: 1.2, transparent: true, opacity: 0.9 }));
+      anel.userData = { tempoVida: 1.0 }; cena.add(anel); aneisDetritos.push(anel);
+    }
+
+    function atualizarEscalaEstrela(estrelaObj, valorSlider) {
+      const raioVisivel = calcularRaio3DEstrela(valorSlider); estrelaObj.scale.set(raioVisivel, raioVisivel, raioVisivel);
+      estrelaObj.userData.valorSlider = valorSlider;
+      estrelaObj.userData.massa = (estrelaObj.userData.tipo === 'buraconegro') ? valorSlider * 3.0 : valorSlider * 0.5;
+      if (estrelaObj.userData.luz) estrelaObj.userData.luz.intensity = (estrelaObj.userData.tipo === 'buraconegro') ? 1.5 : 3.0;
+    }
+
+    function atualizarEscalaPlaneta(planetaObj, valorSlider) {
+      const raioVisivel = calcularRaio3DPlaneta(valorSlider); planetaObj.scale.set(raioVisivel, raioVisivel, raioVisivel); planetaObj.userData.valorSlider = valorSlider;
+      planetaObj.userData.massa = valorSlider * 0.05;
+    }
+
+    function atualizarRelevoPlaneta(planetaObj, alturaMontanha) {
+      planetaObj.userData.alturaMontanha = alturaMontanha;
+      planetaObj.geometry.dispose();
+      planetaObj.geometry = (planetaObj.userData.tipo === 'gasoso') ? 
+        new THREE.SphereGeometry(1, 64, 64) : 
+        gerargGeometriaRelevoAtualizado(alturaMontanha);
+    }
+
+    function gerargGeometriaRelevoAtualizado(alturaMontanha) {
+      const geometria = new THREE.SphereGeometry(1, 64, 64);
+      const posicaoAtributo = geometria.attributes.position;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < posicaoAtributo.count; i++) {
+        v.fromBufferAttribute(posicaoAtributo, i); v.normalize();
+        let ruido = Math.sin(v.x * 12.0) * Math.cos(v.y * 12.0) * Math.sin(v.z * 12.0);
+        ruido += (Math.sin(v.x * 24.0) * Math.cos(v.z * 24.0)) * 0.5;
+        let fatorAltura = 1.0 + (ruido * 0.03 * (alturaMontanha / 2.0));
+        v.multiplyScalar(fatorAltura);
+        posicaoAtributo.setXYZ(i, v.x, v.y, v.z);
+      }
+      geometria.computeVertexNormals();
+      return geometria;
+    }
+
+    function atualizarAguaPlaneta(planetaObj, temAgua) {
+      planetaObj.userData.temAgua = temAgua;
+      if (temAgua && !planetaObj.userData.aguaMesh && planetaObj.userData.tipo !== 'gasoso') {
+        const geoAgua = new THREE.SphereGeometry(0.99, 64, 64);
+        const matAgua = new THREE.MeshStandardMaterial({ color: 0x1e90ff, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.65 });
+        const aguaMesh = new THREE.Mesh(geoAgua, matAgua);
+        aguaMesh.receiveShadow = true;
+        planetaObj.add(aguaMesh);
+        planetaObj.userData.aguaMesh = aguaMesh;
+      } else if (!temAgua && planetaObj.userData.aguaMesh) {
+        planetaObj.remove(planetaObj.userData.aguaMesh);
+        planetaObj.userData.aguaMesh = null;
+      }
+    }
+
+    function obterCorEspectral(porcentagem) {
+      const cores = [new THREE.Color(0xff2200), new THREE.Color(0xff7700), new THREE.Color(0xffe100), new THREE.Color(0xffffff), new THREE.Color(0x00d2ff), new THREE.Color(0x5f27cd)];
+      const t = porcentagem / 100; const idx = t * (cores.length - 1); const index = Math.floor(idx); const proximo = Math.min(index + 1, cores.length - 1);
+      return new THREE.Color().lerpColors(cores[index], cores[proximo], idx - index);
+    }
+
+    function atualizarCorEstrela(estrelaObj, porcentagem) {
+      if (estrelaObj.userData.tipo === 'buraconegro' || estrelaObj.userData.tipo === 'neutron') return;
+      const cor = obterCorEspectral(porcentagem);
+      if (estrelaObj.userData.nucleoMesh) estrelaObj.userData.nucleoMesh.material.color = cor;
+      estrelaObj.userData.luz.color = cor; estrelaObj.userData.porcentagemCor = porcentagem;
+    }
+
+    function atualizarCorPlanetaBase(planetaObj, corHex) {
+      planetaObj.userData.corHexBase = corHex;
+      if (planetaObj.userData.tipo === 'gasoso') planetaObj.material.map = criarTexturaGasoso(corHex, '#d1d1d1');
+      else { planetaObj.material.map = criarTexturaGranulada(corHex); planetaObj.material.color.set(corHex); }
+      planetaObj.material.needsUpdate = true;
+    }
+
+    function atualizarAtmosferaPlaneta(planetaObj, ativa, porcentagem) {
+      planetaObj.userData.temAtmosfera = ativa; planetaObj.userData.corAtmosferaPorcentagem = porcentagem; planetaObj.userData.atmosferaMesh.visible = ativa;
+      if (ativa) planetaObj.userData.atmosferaMesh.material.uniforms.corAtmosfera.value = obterCorEspectral(porcentagem);
+    }
+
+    function atualizarNomeCorpo(obj, novoNome) {
+      obj.userData.nome = novoNome; obj.remove(obj.userData.spriteNome);
+      const novoSprite = criarSpriteTexto(novoNome);
+      novoSprite.position.set(0, (obj.userData.tipo === 'buraconegro' || obj.userData.tipo === 'estrela' || obj.userData.tipo === 'neutron') ? 2.5 : 1.8, 0);
+      obj.add(novoSprite); obj.userData.spriteNome = novoSprite;
+    }
+
+    const controles = new THREE.PointerLockControls(camera, document.body);
+    const painelInstrucoes = document.getElementById('instrucoes');
+    const painelCriador = document.getElementById('painel-criador');
+    const painelEditarObjeto = document.getElementById('painel-editar-objeto');
+    const painelSaves = document.getElementById('painel-saves');
+    const painelControles = document.getElementById('painel-controles');
+    const painelGraficos = document.getElementById('painel-graficos');
+    const painelLink = document.getElementById('painel-link');
+    const painelListaCorpos = document.getElementById('painel-lista-corpos');
+    const painelImportar = document.getElementById('painel-importar');
+
+    let objetoEmEdicao = null;
+
+    painelInstrucoes.addEventListener('click', (e) => { if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) controles.lock(); });
+    document.getElementById('btn-retomar').addEventListener('click', () => controles.lock());
+    document.getElementById('btn-abrir-importar').addEventListener('click', () => { painelInstrucoes.style.display = 'none'; painelImportar.style.display = 'block'; });
+    document.getElementById('btn-fechar-importar').addEventListener('click', () => { painelImportar.style.display = 'none'; painelInstrucoes.style.display = 'block'; });
+    document.getElementById('btn-confirmar-importar').addEventListener('click', () => { if (carregarDoBase64(document.getElementById('input-importar-code').value)) { document.getElementById('input-importar-code').value = ''; painelImportar.style.display = 'none'; controles.lock(); } });
+    document.getElementById('btn-abrir-lista-corpos-menu').addEventListener('click', () => { painelInstrucoes.style.display = 'none'; abrirPainelListaCorpos(); });
+    document.getElementById('btn-abrir-controles').addEventListener('click', () => { painelInstrucoes.style.display = 'none'; painelControles.style.display = 'block'; });
+    document.getElementById('btn-fechar-controles').addEventListener('click', () => { painelControles.style.display = 'none'; painelInstrucoes.style.display = 'block'; });
+    document.getElementById('btn-abrir-graficos').addEventListener('click', () => { painelInstrucoes.style.display = 'none'; painelGraficos.style.display = 'block'; });
+    document.getElementById('btn-fechar-graficos').addEventListener('click', () => { painelGraficos.style.display = 'none'; painelInstrucoes.style.display = 'block'; });
+
+    controles.addEventListener('lock', () => {
+      [painelInstrucoes, painelCriador, painelEditarObjeto, painelSaves, painelControles, painelGraficos, painelLink, painelListaCorpos, painelImportar].forEach(p => p.style.display = 'none');
+    });
+
+    controles.addEventListener('unlock', () => {
+      const p = [painelCriador, painelEditarObjeto, painelSaves, painelControles, painelGraficos, painelLink, painelListaCorpos, painelImportar];
+      if (p.every(x => x.style.display !== 'block')) painelInstrucoes.style.display = 'block';
+    });
+
+    function abrirPainelListaCorpos() {
+      const container = document.getElementById('lista-corpos-conteudo'); container.innerHTML = '';
+      const todosObjetos = [...estrelas, ...planetas];
+      if (todosObjetos.length === 0) container.innerHTML = '<div style="text-align:center; color:#aaa; padding:20px;">Nenhum corpo celeste na simulação.</div>';
+      else {
+        todosObjetos.forEach(obj => {
+          let tNome = obj.userData.tipo === 'gasoso' ? 'Planeta Gasoso' : obj.userData.tipo === 'estrela' ? 'Estrela' : obj.userData.tipo === 'neutron' ? 'Estrela de Nêutrons' : obj.userData.tipo === 'buraconegro' ? 'Buraco Negro' : 'Planeta Rochoso';
+          const div = document.createElement('div'); div.className = 'item-corpo-lista';
+          div.innerHTML = `<div><strong style="color: #fff; display: block; font-size: 14px;">${obj.userData.nome}</strong><span style="font-size: 12px; color: #aaa;">${tNome}</span></div><div style="display: flex; gap: 8px; align-items: center;"><button class="btn-save-opt btn-deletar btn-deletar-item-lista" style="padding: 4px 8px;">🗑️ Excluir</button><span style="font-size: 12px; color: #48dbfb; font-weight: bold;">Ir até lá ➔</span></div>`;
+          div.querySelector('.btn-deletar-item-lista').addEventListener('click', (e) => { e.stopPropagation(); if (confirm(`Deseja mesmo excluir "${obj.userData.nome}"?`)) { deletarObjeto(obj); abrirPainelListaCorpos(); } });
+          div.addEventListener('click', () => teleportarParaObjeto(obj)); container.appendChild(div);
+        });
+      }
+      painelListaCorpos.style.display = 'block';
+    }
+
+    function teleportarParaObjeto(obj) {
+      const posObj = obj.position;
+      let off = obj.userData.tipo === 'estrela' ? calcularRaio3DEstrela(obj.userData.valorSlider)*3 : (obj.userData.tipo === 'neutron' || obj.userData.tipo === 'buraconegro') ? calcularRaio3DEstrela(obj.userData.valorSlider)*5 : calcularRaio3DPlaneta(obj.userData.valorSlider)*4;
+      camera.position.set(posObj.x, posObj.y + off * 0.3, posObj.z + off); camera.lookAt(posObj);
+      painelListaCorpos.style.display = 'none'; painelInstrucoes.style.display = 'block';
+    }
+
+    document.getElementById('btn-fechar-lista-corpos').addEventListener('click', () => { painelListaCorpos.style.display = 'none'; painelInstrucoes.style.display = 'block'; });
+    document.getElementById('select-preset-grafico').addEventListener('change', (e) => aplicarPresetGrafico(e.target.value));
+    document.getElementById('slider-res').addEventListener('input', (e) => { const scale = parseFloat(e.target.value); document.getElementById('valor-res').textContent = `${scale.toFixed(2)}x`; renderer.setPixelRatio(window.devicePixelRatio * scale); });
+    document.getElementById('slider-far').addEventListener('input', (e) => { const farVal = parseFloat(e.target.value); document.getElementById('valor-far').textContent = farVal.toLocaleString('pt-BR'); camera.far = farVal; camera.updateProjectionMatrix(); });
+    document.getElementById('check-caudas').addEventListener('change', (e) => planetas.forEach(p => { if (p.userData.caudaMesh) p.userData.caudaMesh.visible = e.target.checked; }));
+    document.getElementById('check-erupcoes').addEventListener('change', (e) => { erupcoesAtivas = e.target.checked; estrelas.forEach(eObj => { if (eObj.userData.placasErupcao) eObj.userData.placasErupcao.forEach(placa => placa.visible = erupcoesAtivas); }); });
+
+    aplicarPresetGrafico(2);
+
+    const raycaster = new THREE.Raycaster(); const centroTela = new THREE.Vector2(0, 0);
+
+    document.addEventListener('mousedown', (e) => {
+      if (!controles.isLocked) return;
+      raycaster.setFromCamera(centroTela, camera);
+      const intersec = raycaster.intersectObjects([...estrelas, ...planetas], true);
+
+      if (e.button === 0) {
+        if (planetaPousado) { planetaPousado = null; return; }
+        if (intersec.length > 0) {
+          let objHit = intersec[0].object; while (objHit.parent && objHit.parent !== cena) objHit = objHit.parent;
+          if (objHit.userData && (objHit.userData.tipo === 'planeta' || objHit.userData.tipo === 'gasoso')) { planetaPousado = objHit; offsetPouso = new THREE.Vector3().subVectors(camera.position, objHit.position).normalize().multiplyScalar(calcularRaio3DPlaneta(objHit.userData.valorSlider) + 0.2); }
+        }
+      }
+      if (e.button === 2 && intersec.length > 0) {
+        let objHit = intersec[0].object; while (objHit.parent && objHit.parent !== cena) objHit = objHit.parent;
+        if (objHit.userData && objHit.userData.tipo) { objetoEmEdicao = objHit; controles.unlock(); abrirPainelEdicao(); }
+      }
+    });
+
+    function abrirPainelEdicao() {
+      const sliderTam = document.getElementById('slider-tamanho-edit');
+      document.getElementById('input-nome-edit').value = objetoEmEdicao.userData.nome;
+      const t = objetoEmEdicao.userData.tipo;
+      sliderTam.min = (t === 'estrela' || t === 'neutron' || t === 'buraconegro') ? "100" : "1";
+      sliderTam.max = (t === 'estrela' || t === 'neutron' || t === 'buraconegro') ? "5000" : "150";
+      sliderTam.value = objetoEmEdicao.userData.valorSlider;
+      document.getElementById('valor-km-edit').textContent = `${(objetoEmEdicao.userData.valorSlider * 1000).toLocaleString('pt-BR')} km`;
+
+      if (t === 'estrela') {
+        document.getElementById('titulo-editar').textContent = "Propriedades da Estrela"; document.getElementById('titulo-editar').style.color = "#ff9f43";
+        document.getElementById('container-cor-base').style.display = 'none'; document.getElementById('container-cor-edit').style.display = 'block'; document.getElementById('label-cor-edit').textContent = "Temperatura / Espectro:"; document.getElementById('container-atmosfera-edit').style.display = 'none';
+        document.getElementById('container-montanha-edit').style.display = 'none'; document.getElementById('container-agua-edit-check').style.display = 'none';
+        document.getElementById('slider-cor-edit').value = objetoEmEdicao.userData.porcentagemCor;
+      } else if (t === 'neutron' || t === 'buraconegro') {
+        document.getElementById('titulo-editar').textContent = t === 'neutron' ? "Estrela de Nêutrons" : "Buraco Negro"; document.getElementById('titulo-editar').style.color = "#00d2ff";
+        document.getElementById('container-cor-base').style.display = 'none'; document.getElementById('container-cor-edit').style.display = 'none'; document.getElementById('container-atmosfera-edit').style.display = 'none';
+        document.getElementById('container-montanha-edit').style.display = 'none'; document.getElementById('container-agua-edit-check').style.display = 'none';
+      } else {
+        document.getElementById('titulo-editar').textContent = t === 'gasoso' ? "Planeta Gasoso" : "Planeta Rochoso"; document.getElementById('titulo-editar').style.color = "#48dbfb";
+        document.getElementById('container-cor-base').style.display = 'block'; document.getElementById('container-cor-edit').style.display = 'block'; document.getElementById('label-cor-edit').textContent = "Cor do Gradiente da Atmosfera:"; document.getElementById('container-atmosfera-edit').style.display = 'flex';
+        
+        document.getElementById('container-montanha-edit').style.display = (t === 'gasoso') ? 'none' : 'block';
+        document.getElementById('container-agua-edit-check').style.display = (t === 'gasoso') ? 'none' : 'flex';
+        
+        document.getElementById('slider-montanha-edit').value = objetoEmEdicao.userData.alturaMontanha !== undefined ? objetoEmEdicao.userData.alturaMontanha : 2;
+        document.getElementById('valor-montanha-edit').textContent = descRótuloMontanha(document.getElementById('slider-montanha-edit').value);
+        document.getElementById('check-agua-edit').checked = objetoEmEdicao.userData.temAgua !== undefined ? objetoEmEdicao.userData.temAgua : true;
+
+        document.getElementById('input-cor-base').value = objetoEmEdicao.userData.corHexBase || '#ffffff'; document.getElementById('check-atmosfera').checked = objetoEmEdicao.userData.temAtmosfera; document.getElementById('slider-cor-edit').value = objetoEmEdicao.userData.corAtmosferaPorcentagem;
+      }
+      painelEditarObjeto.style.display = 'block'; painelInstrucoes.style.display = 'none';
+    }
+
+    const teclas = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, Minus: false, Equal: false };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyL' || e.key === 'l' || e.key === 'L') { if (document.activeElement.tagName === 'INPUT') return; e.preventDefault(); if (controles.isLocked) controles.unlock(); abrirPainelListaCorpos(); return; }
+      if (e.code === 'Tab') { e.preventDefault(); if (controles.isLocked) { controles.unlock(); painelCriador.style.display = 'block'; painelInstrucoes.style.display = 'none'; } else if (painelCriador.style.display === 'block') { painelCriador.style.display = 'none'; controles.lock(); } }
+      if (VELOCIDADES_TEMPO[e.key]) { multiplicadorTempo = VELOCIDADES_TEMPO[e.key].valor; HUD.textContent = `Velocidade: ${VELOCIDADES_TEMPO[e.key].rotulo}`; }
+      if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Minus','Equal'].includes(e.code) || ['w','a','s','d','-','=','+'].includes(e.key)) {
+        if(e.code==='KeyW'||e.key==='w')teclas.w=true; if(e.code==='KeyA'||e.key==='a')teclas.a=true; if(e.code==='KeyS'||e.key==='s')teclas.s=true; if(e.code==='KeyD'||e.key==='d')teclas.d=true;
+        if(e.code==='ArrowUp')teclas.ArrowUp=true; if(e.code==='ArrowDown')teclas.ArrowDown=true; if(e.code==='ArrowLeft')teclas.ArrowLeft=true; if(e.code==='ArrowRight')teclas.ArrowRight=true;
+        if(e.code==='Minus'||e.key==='-')teclas.Minus=true; if(e.code==='Equal'||e.key==='='||e.key==='+')teclas.Equal=true;
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Minus','Equal'].includes(e.code) || ['w','a','s','d','-','=','+'].includes(e.key)) {
+        if(e.code==='KeyW'||e.key==='w')teclas.w=false; if(e.code==='KeyA'||e.key==='a')teclas.a=false; if(e.code==='KeyS'||e.key==='s')teclas.s=false; if(e.code==='KeyD'||e.key==='d')teclas.d=false;
+        if(e.code==='ArrowUp')teclas.ArrowUp=false; if(e.code==='ArrowDown')teclas.ArrowDown=false; if(e.code==='ArrowLeft')teclas.ArrowLeft=false; if(e.code==='ArrowRight')teclas.ArrowRight=false;
+        if(e.code==='Minus'||e.key==='-')teclas.Minus=false; if(e.code==='Equal'||e.key==='='||e.key==='+')teclas.Equal=false;
+      }
+    });
+
+    function limparSistemaSolar() {
+      planetaPousado = null;
+      for (let p of planetas) { cena.remove(p.userData.caudaMesh); cena.remove(p); }
+      for (let e of estrelas) cena.remove(e);
+      for (let a of aneisDetritos) cena.remove(a);
+      planetas = []; estrelas = []; aneisDetritos = [];
+    }
+
+    function salvarSlot(index) {
+      const dadosState = {
+        data: new Date().toLocaleString('pt-BR'),
+        camera: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+        estrelas: estrelas.map(e => ({
+          x: e.position.x, y: e.position.y, z: e.position.z,
+          vx: e.userData.velocidade ? e.userData.velocidade.x : 0, 
+          vy: e.userData.velocidade ? e.userData.velocidade.y : 0, 
+          vz: e.userData.velocidade ? e.userData.velocidade.z : 0,
+          valorSlider: e.userData.valorSlider, porcentagemCor: e.userData.porcentagemCor, nome: e.userData.nome, tipo: e.userData.tipo
+        })),
+        planetas: planetas.map(p => ({
+          x: p.position.x, y: p.position.y, z: p.position.z,
+          valorSlider: p.userData.valorSlider, vx: p.userData.velocidade.x, vy: p.userData.velocidade.y, vz: p.userData.velocidade.z,
+          temAtmosfera: p.userData.temAtmosfera, corAtmosferaPorcentagem: p.userData.corAtmosferaPorcentagem, corHexBase: p.userData.corHexBase, nome: p.userData.nome, tipo: p.userData.tipo,
+          alturaMontanha: p.userData.alturaMontanha, temAgua: p.userData.temAgua
+        }))
+      };
+      localStorage.setItem(`sistema_solar_slot_${index}`, JSON.stringify(dadosState)); renderizarListaSaves();
+    }
+
+    function carregarSlot(index) {
+      const raw = localStorage.getItem(`sistema_solar_slot_${index}`); if (!raw) return;
+      const dadosState = JSON.parse(raw); limparSistemaSolar(); camera.position.set(dadosState.camera.x, dadosState.camera.y, dadosState.camera.z);
+
+      for (let e of dadosState.estrelas) {
+        let novaEstrela;
+        if (e.tipo === 'neutron') novaEstrela = criarEstrelaNeutron(new THREE.Vector3(e.x, e.y, e.z), e.valorSlider, e.nome);
+        else if (e.tipo === 'buraconegro') novaEstrela = criarBuracoNegro(new THREE.Vector3(e.x, e.y, e.z), e.valorSlider, e.nome);
+        else novaEstrela = criarEstrela(new THREE.Vector3(e.x, e.y, e.z), e.valorSlider, e.porcentagemCor, e.nome);
+        
+        if (novaEstrela.userData) novaEstrela.userData.velocidade.set(e.vx || 0, e.vy || 0, e.vz || 0);
+      }
+      for (let p of dadosState.planetas) { 
+        criarPlaneta(new THREE.Vector3(p.x, p.y, p.z), p.valorSlider, false, new THREE.Vector3(p.vx, p.vy, p.vz), p.temAtmosfera, p.corAtmosferaPorcentagem, p.corHexBase || '#ffffff', p.nome, p.tipo, p.alturaMontanha || 2, p.temAgua !== undefined ? p.temAgua : true); 
+      }
+      painelSaves.style.display = 'none'; controles.lock();
+    }
+
+    function gerarLinkSave(index) {
+      const raw = localStorage.getItem(`sistema_solar_slot_${index}`); if (!raw) return;
+      document.getElementById('input-save-link').value = `https://savelink/#/share:${btoa(unescape(encodeURIComponent(raw)))}`;
+      painelSaves.style.display = 'none'; painelLink.style.display = 'block';
+    }
+    document.getElementById('btn-copiar-link').addEventListener('click', () => { document.getElementById('input-save-link').select(); navigator.clipboard.writeText(document.getElementById('input-save-link').value); alert('Link copiado!'); });
+    document.getElementById('btn-fechar-link').addEventListener('click', () => { painelLink.style.display = 'none'; painelSaves.style.display = 'block'; });
+    function deletarSlot(index) { localStorage.removeItem(`sistema_solar_slot_${index}`); renderizarListaSaves(); }
+
+    function renderizarListaSaves() {
+      const container = document.getElementById('lista-saves'); container.innerHTML = '';
+      for (let i = 1; i <= 10; i++) {
+        const slotData = localStorage.getItem(`sistema_solar_slot_${i}`) ? JSON.parse(localStorage.getItem(`sistema_solar_slot_${i}`)) : null;
+        const div = document.createElement('div'); div.className = 'item-save';
+        div.innerHTML = `<div class="item-save-info"><strong>Slot ${i}</strong><span>${slotData ? slotData.data : 'Vazio'}</span></div><div class="item-save-acoes"><button class="btn-save-opt btn-salvar" onclick="salvarSlot(${i})">Salvar</button>${slotData ? `<button class="btn-save-opt btn-carregar" onclick="carregarSlot(${i})">Carregar</button><button class="btn-save-opt btn-link" onclick="gerarLinkSave(${i})">Link</button><button class="btn-save-opt btn-deletar" onclick="deletarSlot(${i})">Deletar</button>` : ''}</div>`;
+        container.appendChild(div);
+      }
+    }
+    document.getElementById('btn-abrir-saves').addEventListener('click', () => { renderizarListaSaves(); painelInstrucoes.style.display = 'none'; painelSaves.style.display = 'block'; });
+    document.getElementById('btn-fechar-saves').addEventListener('click', () => { painelSaves.style.display = 'none'; painelInstrucoes.style.display = 'block'; });
+
+    function descRótuloMontanha(val) {
+      val = parseInt(val);
+      if (val === 0) return "Liso (Sem Relevo)";
+      if (val <= 3) return "Baixo";
+      if (val <= 6) return "Moderado";
+      if (val <= 9) return "Montanhoso (Alto)";
+      return "Extremo (Himalaia)";
+    }
+
+    document.getElementById('select-tipo').addEventListener('change', (e) => {
+      const v = e.target.value; const s = document.getElementById('slider-tamanho-criar');
+      const containerMontanha = document.getElementById('container-montanha-criar');
+      const containerAgua = document.getElementById('container-agua-criar-check');
+
+      if (v === 'planeta') { 
+        s.min = "1"; s.max = "30"; s.value = "12"; 
+        document.getElementById('opcoes-planeta').style.display = 'flex';
+        containerMontanha.style.display = 'block'; containerAgua.style.display = 'flex';
+      } else if (v === 'gasoso') { 
+        s.min = "20"; s.max = "150"; s.value = "50"; 
+        document.getElementById('opcoes-planeta').style.display = 'flex';
+        containerMontanha.style.display = 'none'; containerAgua.style.display = 'none';
+      } else { 
+        s.min = "500"; s.max = "3000"; s.value = "1400"; 
+        document.getElementById('opcoes-planeta').style.display = 'none';
+        containerMontanha.style.display = 'none'; containerAgua.style.display = 'none';
+      }
+      document.getElementById('valor-tamanho-criar').textContent = `${(parseFloat(s.value) * 1000).toLocaleString('pt-BR')} km`;
+    });
+    
+    document.getElementById('slider-tamanho-criar').addEventListener('input', (e) => { document.getElementById('valor-tamanho-criar').textContent = `${(parseFloat(e.target.value) * 1000).toLocaleString('pt-BR')} km`; });
+    document.getElementById('slider-montanha-criar').addEventListener('input', (e) => { document.getElementById('valor-montanha-criar').textContent = descRótuloMontanha(e.target.value); });
+    
+    document.getElementById('btn-criar-objeto').addEventListener('click', () => {
+      const pontoFrente = new THREE.Vector3(); camera.getWorldDirection(pontoFrente);
+      const pos = new THREE.Vector3().copy(camera.position).addScaledVector(pontoFrente, 60);
+      const nome = document.getElementById('input-nome-criar').value || "Novo Objeto"; 
+      const t = document.getElementById('select-tipo').value; 
+      const val = parseFloat(document.getElementById('slider-tamanho-criar').value);
+      const altMontanha = parseInt(document.getElementById('slider-montanha-criar').value);
+      const temAguaVal = document.getElementById('check-agua-criar').checked;
+      
+      let objCriado = null;
+      if (t === 'estrela') objCriado = criarEstrela(pos, val, 60, nome);
+      else if (t === 'neutron') objCriado = criarEstrelaNeutron(pos, val, nome);
+      else if (t === 'buraconegro') objCriado = criarBuracoNegro(pos, val, nome);
+      else objCriado = criarPlaneta(pos, val, document.getElementById('check-orbita-auto').checked, null, false, 50, '#ffffff', nome, t, altMontanha, temAguaVal);
+      
+      painelCriador.style.display = 'none'; controles.lock();
+    });
+    document.getElementById('btn-fechar-criador').addEventListener('click', () => { painelCriador.style.display = 'none'; controles.lock(); });
+
+    document.getElementById('input-nome-edit').addEventListener('input', (e) => { if (objetoEmEdicao) atualizarNomeCorpo(objetoEmEdicao, e.target.value); });
+    document.getElementById('slider-tamanho-edit').addEventListener('input', (e) => {
+      if (objetoEmEdicao) {
+        const val = parseFloat(e.target.value);
+        if (['estrela','neutron','buraconegro'].includes(objetoEmEdicao.userData.tipo)) atualizarEscalaEstrela(objetoEmEdicao, val); else atualizarEscalaPlaneta(objetoEmEdicao, val);
+        document.getElementById('valor-km-edit').textContent = `${(val * 1000).toLocaleString('pt-BR')} km`;
+      }
+    });
+    
+    document.getElementById('slider-montanha-edit').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      document.getElementById('valor-montanha-edit').textContent = descRótuloMontanha(val);
+      if (objetoEmEdicao && (objetoEmEdicao.userData.tipo === 'planeta')) {
+        atualizarRelevoPlaneta(objetoEmEdicao, val);
+      }
+    });
+
+    document.getElementById('check-agua-edit').addEventListener('change', (e) => {
+      if (objetoEmEdicao && (objetoEmEdicao.userData.tipo === 'planeta')) {
+        atualizarAguaPlaneta(objetoEmEdicao, e.target.checked);
+      }
+    });
+
+    document.getElementById('input-cor-base').addEventListener('input', (e) => { if (objetoEmEdicao && ['planeta','gasoso'].includes(objetoEmEdicao.userData.tipo)) atualizarCorPlanetaBase(objetoEmEdicao, e.target.value); });
+    document.getElementById('slider-cor-edit').addEventListener('input', (e) => { if (objetoEmEdicao) { const val = parseFloat(e.target.value); if (objetoEmEdicao.userData.tipo === 'estrela') atualizarCorEstrela(objetoEmEdicao, val); else if (['planeta','gasoso'].includes(objetoEmEdicao.userData.tipo)) atualizarAtmosferaPlaneta(objetoEmEdicao, objetoEmEdicao.userData.temAtmosfera, val); } });
+    document.getElementById('check-atmosfera').addEventListener('change', (e) => { if (objetoEmEdicao && ['planeta','gasoso'].includes(objetoEmEdicao.userData.tipo)) atualizarAtmosferaPlaneta(objetoEmEdicao, objetoEmEdicao.userData.temAtmosfera, val); });
+    document.getElementById('btn-deletar-objeto').addEventListener('click', () => { if (objetoEmEdicao && confirm(`Tem certeza que deseja excluir "${objetoEmEdicao.userData.nome}"?`)) { deletarObjeto(objetoEmEdicao); objetoEmEdicao = null; painelEditarObjeto.style.display = 'none'; controles.lock(); } });
+    document.getElementById('btn-fechar-editar').addEventListener('click', () => { painelEditarObjeto.style.display = 'none'; controles.lock(); });
+
+    const direcaoVisao = new THREE.Vector3(); const dtFixo = 0.01; let tempoGeral = 0;
+
+    function aplicarFisicaEAtualizarCaudas() {
+      if (multiplicadorTempo === 0) return;
+      const totalPassos = Math.max(1, multiplicadorTempo * 4);
+      tempoGeral += 0.015 * Math.max(0.2, multiplicadorTempo * 0.2);
+
+      for (let step = 0; step < totalPassos; step++) {
+        const todosCorpos = [...estrelas, ...planetas];
+
+        for (let i = todosCorpos.length - 1; i >= 0; i--) {
+          const corpo = todosCorpos[i];
+          const a1 = calcularAceleracao(corpo, todosCorpos);
+          corpo.position.addScaledVector(corpo.userData.velocidade, dtFixo);
+          corpo.position.addScaledVector(a1, 0.5 * dtFixo * dtFixo);
+          
+          const a2 = calcularAceleracao(corpo, todosCorpos);
+          const acelMedia = new THREE.Vector3().addVectors(a1, a2).multiplyScalar(0.5);
+          corpo.userData.velocidade.addScaledVector(acelMedia, dtFixo);
+          
+          if (corpo.userData.tipo === 'planeta' || corpo.userData.tipo === 'gasoso') {
+            corpo.rotation.y += 0.005;
+            if (corpo.userData.aguaMesh) {
+              corpo.userData.aguaMesh.rotation.y -= 0.002;
+            }
+          }
+        }
+
+        // Fusão de Estrelas / Corpos Massivos
+        for (let i = estrelas.length - 1; i >= 0; i--) {
+          for (let j = i - 1; j >= 0; j--) {
+            const e1 = estrelas[i]; const e2 = estrelas[j];
+            if (!e1 || !e2) continue;
+
+            const dist = e1.position.distanceTo(e2.position);
+            const raio1 = calcularRaio3DEstrela(e1.userData.valorSlider);
+            const raio2 = calcularRaio3DEstrela(e2.userData.valorSlider);
+
+            if (dist < (raio1 + raio2) * 0.75) {
+              fundirCorposMassivos(e1, e2);
+            }
+          }
+        }
+
+        // Fusão / Colisão entre Planetas
+        for (let i = planetas.length - 1; i >= 0; i--) {
+          for (let j = i - 1; j >= 0; j--) {
+            const p1 = planetas[i]; const p2 = planetas[j];
+            if (!p1 || !p2) continue;
+
+            const dist = p1.position.distanceTo(p2.position);
+            const raio1 = calcularRaio3DPlaneta(p1.userData.valorSlider);
+            const raio2 = calcularRaio3DPlaneta(p2.userData.valorSlider);
+
+            if (dist < (raio1 + raio2)) {
+              fundirPlanetas(p1, p2);
+            }
+          }
+        }
+
+        // Destruição de Planetas por Estrelas
+        for (let i = planetas.length - 1; i >= 0; i--) {
+          const p = planetas[i];
+          for (let e of estrelas) {
+            const dist = p.position.distanceTo(e.position);
+            if (dist <= (calcularRaio3DEstrela(e.userData.valorSlider) + calcularRaio3DPlaneta(p.userData.valorSlider))) {
+              destruirPlanetaPorRoche(p, e);
+              break;
+            }
+          }
+        }
+      }
+
+      for (let p of planetas) {
+        const hist = p.userData.historicoPosicoes; hist.unshift(p.position.clone()); hist.pop();
+        const attrPosicao = p.userData.caudaMesh.geometry.attributes.position;
+        for (let i = 0; i < NUM_PONTOS_CAUDA; i++) attrPosicao.setXYZ(i, hist[i].x, hist[i].y, hist[i].z);
+        attrPosicao.needsUpdate = true;
+      }
+      for (let i = aneisDetritos.length - 1; i >= 0; i--) {
+        const anel = aneisDetritos[i]; anel.userData.tempoVida -= 0.001 * multiplicadorTempo;
+        anel.material.opacity = Math.max(0, anel.userData.tempoVida); anel.rotation.y += 0.002 * multiplicadorTempo;
+        if (anel.userData.tempoVida <= 0) { cena.remove(anel); aneisDetritos.splice(i, 1); }
+      }
+      for (let e of estrelas) {
+        e.rotation.y += 0.002 * multiplicadorTempo;
+        if (e.userData.discoAcrecao) e.userData.discoAcrecao.rotation.z += 0.02 * multiplicadorTempo;
+        if (e.userData.tipo === 'estrela' && e.userData.placasErupcao) {
+          e.userData.placasErupcao.forEach(placa => {
+            const d = placa.userData; const ciclo = ((tempoGeral * d.velocidadeErupcao + d.fase) % (Math.PI * 2)) / (Math.PI * 2);
+            placa.position.copy(d.dirNormal).multiplyScalar(1.0 + ciclo * 0.6);
+            const esc = d.escalaBase * (0.5 + ciclo * 1.2); placa.scale.set(esc, esc, esc); placa.material.opacity = Math.sin(ciclo * Math.PI);
+          });
+        }
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate); aplicarFisicaEAtualizarCaudas();
+      if (planetaPousado) camera.position.copy(planetaPousado.position.clone().add(offsetPouso));
+      if (controles.isLocked) {
+        camera.getWorldDirection(direcaoVisao);
+        if (!planetaPousado) { if(teclas.w)camera.position.addScaledVector(direcaoVisao, 4.0); if(teclas.s)camera.position.addScaledVector(direcaoVisao, -4.0); if(teclas.a)controles.moveRight(-4.0); if(teclas.d)controles.moveRight(4.0); }
+        if(teclas.ArrowUp)camera.position.addScaledVector(direcaoVisao, 1.0); if(teclas.ArrowDown)camera.position.addScaledVector(direcaoVisao, -1.0); if(teclas.ArrowLeft)controles.moveRight(-1.0); if(teclas.ArrowRight)controles.moveRight(1.0);
+        if(teclas.Minus)camera.position.addScaledVector(direcaoVisao, -25.0); if(teclas.Equal)camera.position.addScaledVector(direcaoVisao, 25.0);
+      }
+      renderer.render(cena, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+  </script>
+</body>
+</html>
