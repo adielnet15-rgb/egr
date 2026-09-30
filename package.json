@@ -1,0 +1,9 @@
+{
+  "name": "meu-aplicativo",
+  "main": "index.html",
+  "window": {
+    "title": "Meu App HTML",
+    "width": 800,
+    "height": 600
+  }
+}
