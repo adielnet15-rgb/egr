@@ -1,0 +1,27 @@
+name: Compilar HTML para EXE
+
+on:
+  workflow_dispatch: # Permite rodar manualmente com 1 clique
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v3
+
+      - name: Empacotar em ZIP
+        run: zip -r app.nw . -x ".git*" ".github*"
+
+      - name: Baixar NW.js e gerar EXE
+        run: |
+          wget https://dl.nwjs.io/v0.72.0/nwjs-v0.72.0-win-x64.zip
+          unzip nwjs-v0.72.0-win-x64.zip
+          cat nwjs-v0.72.0-win-x64/nw.exe app.nw > MeuApp.exe
+
+      - name: Disponibilizar o .exe
+        uses: actions/upload-artifact@v3
+        with:
+          name: MeuAplicativo-Windows
+          path: MeuApp.exe
